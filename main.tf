@@ -2,7 +2,7 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# Generate SSH key automatically (works in CI/CD)
+# Generate SSH key automatically (works in CI/CD / Learner Lab)
 resource "tls_private_key" "web" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -42,7 +42,7 @@ resource "aws_security_group" "web_sg" {
 
 # EC2 Instance
 resource "aws_instance" "web" {
-  ami                    = "ami-0e53db6c5f29a338b"
+  ami                    = "ami-0e53db6c5f29a338b" # Ubuntu in ap-south-1
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.web_key.key_name
   vpc_security_group_ids = [aws_security_group.web_sg.id]
@@ -53,49 +53,3 @@ resource "aws_instance" "web" {
     Name = "SimpleWebServer"
   }
 }
-
-# CloudFront Distribution (fixed syntax)
-resource "aws_cloudfront_distribution" "web_distribution" {
-  enabled        = true
-  is_ipv6_enabled = true
-  comment        = "Simple Web Server Distribution"
-
-  origin {
-    domain_name = aws_instance.web.public_dns
-    origin_id   = "ec2-web-origin"
-
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
-
-  default_cache_behavior {
-    target_origin_id       = "ec2-web-origin"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-
-  price_class = "PriceClass_200"
-}
-
