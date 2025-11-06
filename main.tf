@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "ap-south-1"
+  region = "us-east-1"
 }
 
 # Generate SSH key automatically (works in CI/CD / Learner Lab)
